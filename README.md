@@ -1,6 +1,6 @@
-# Sample Hardhat Project
+# POP UP Smart Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This project demostrates a use case of implementing an Index Registry, LSP7 to RSVP with tickets and a LSP8 to give Badges when a attendee checks In at the Event.
 
 Try running some of the following tasks:
 
