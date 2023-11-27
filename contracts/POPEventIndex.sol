@@ -41,11 +41,11 @@ contract POPEventIndex is LSP8IdentifiableDigitalAsset, Reference {
         eventSupported(eventAddress) 
         isContractReferenced(eventAddress) {
  
-            if(!registeredEvents[eventAddress].status) revert EventAlreadyRegistered(eventAddress);
+            if(registeredEvents[eventAddress].status) revert EventAlreadyRegistered(eventAddress);
             
             registeredEvents[eventAddress] = Event(eventAddress, true);
             // mint to the owner of the event to prove ownership
-            _mint(msg.sender, bytes32(abi.encodePacked(eventAddress)), false, "0x0");
+            _mint(msg.sender, bytes32(abi.encodePacked(eventAddress)), true, "0x0");
 
     }
 

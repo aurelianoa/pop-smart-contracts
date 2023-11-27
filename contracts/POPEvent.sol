@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { Reference } from "./helpers/Reference.sol";
 import { IPOPEvent } from "./interfaces/IPOPEvent.sol";
 import { IPOPBadge } from "./interfaces/IPOPBadge.sol";
 import { IPOPEventIndex } from "./interfaces/IPOPEventIndex.sol";
@@ -15,7 +14,7 @@ import {
     _LSP8_REFERENCE_CONTRACT
 } from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/LSP8Constants.sol";
 
-contract POPEvent is IPOPEvent, LSP7DigitalAsset, Reference, ReentrancyGuard {
+contract POPEvent is IPOPEvent, LSP7DigitalAsset, ReentrancyGuard {
 
     error Unauthorized();
     
@@ -24,26 +23,20 @@ contract POPEvent is IPOPEvent, LSP7DigitalAsset, Reference, ReentrancyGuard {
 
     /// @dev Modifier to ensure caller is authorized operator
     modifier onlyAuthorizedAgent() {
-        if (!authorizedAgents[msg.sender] || msg.sender == owner()) {
+        if (!authorizedAgents[msg.sender] || msg.sender != owner()) {
             revert Unauthorized();
         }
         _;
     }
 
     modifier onlyRegisteredEvent() {
-        IPOPEventIndex eventIndex = IPOPEventIndex(getEventIndexReferenced());
-        if(!eventIndex.isEventRegistered(msg.sender)) revert EventNotRegistered();
+       IPOPEventIndex eventIndex = IPOPEventIndex(getEventIndexReferenced());
+        if(!eventIndex.isEventRegistered(address(this))) revert EventNotRegistered(address(this));
         _;
     }
 
     constructor() LSP7DigitalAsset("MYPOPevent", "POPE", msg.sender, true) {
-        // 5ffcf195a9af69d6c3d67d0f71def5a1b9d72fdb251d64d40496441e04f2cf7b is the hash of the URI JSON content
-        bytes memory jsonUrl = abi.encodePacked(
-            bytes4(keccak256('keccak256(utf8)')),
-            hex"5ffcf195a9af69d6c3d67d0f71def5a1b9d72fdb251d64d40496441e04f2cf7b",
-            bytes('ipfs://QmcDs3Xqh9SfYD5sXme98427JSDNULvdZf2fy2pgx9sNYt'));
-
-        _setData(_LSP4_METADATA_KEY, jsonUrl);
+        authorizedAgents[msg.sender] = true;
     }
 
     /// @inheritdoc IPOPEvent
@@ -51,19 +44,20 @@ contract POPEvent is IPOPEvent, LSP7DigitalAsset, Reference, ReentrancyGuard {
         return interfaceId == type(IPOPEvent).interfaceId;
     }
 
-    function getTicket(address to) external payable onlyRegisteredEvent nonReentrant {
+    function getTicket() external payable onlyRegisteredEvent nonReentrant {
         // use a signature to aproove the tokens to be burned;
         authorizeOperator(address(this), 1, "Burnable by this contract");    
-        _mint(to, 1, false, "0x0");
+        _mint(msg.sender, 1, true, "0x0");
     }
 
-    function checkIn(address attendee) external onlyRegisteredEvent onlyAuthorizedAgent nonReentrant {
+    function checkIn(address attendee, address _badgeAddress) external onlyRegisteredEvent onlyAuthorizedAgent nonReentrant {
         if(balanceOf(attendee) < 0) revert("POPEvent: attendee does not have a ticket");
         _spendAllowance(address(this), attendee, 1);
         _burn(attendee, 1, "0x0");
         /// mint the badge with the registered badge contract
-        IPOPBadge badge = IPOPBadge(getBadgeReferenced());
-        badge.createBadge(address(this), attendee);
+        require(badges[_badgeAddress], "POPEvent: badge not registered");
+        IPOPBadge badge = IPOPBadge(_badgeAddress);
+        badge.createBadge(attendee);
     }
 
     //admin functions
@@ -79,7 +73,7 @@ contract POPEvent is IPOPEvent, LSP7DigitalAsset, Reference, ReentrancyGuard {
         );
     }
 
-    function registerBadge(address _badgeAddress) external {
+    function setBadge(address _badgeAddress) external {
         require(_badgeAddress != address(0x0), "POPEvent: zero address");
         /// check if address is IBadge contract
         IPOPBadge badge = IPOPBadge(_badgeAddress);

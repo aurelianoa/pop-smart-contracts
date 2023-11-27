@@ -7,5 +7,5 @@ interface IPOPBadge {
     /// @return bool
     function supportsIPOPEventBadgeInterface(bytes4 interfaceId) external view returns (bool);
 
-    function createBadge(address eventAddress, address to) external;
+    function createBadge(address to) external;
 }
