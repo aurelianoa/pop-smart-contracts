@@ -29,22 +29,18 @@ async function main() {
         console.error(error);
     });
     console.log('Setting badge', tx2);
-
+    
     const tx3 = await eventIndex.registerEvent(eventAddress)
     .catch((error) => {
         console.error(error);
     });
     console.log('Registering event', tx3);
-
+    
     const tx4 = await eventContract.setAuthorizedAgent('0x862E845e7ac5e021d58bb7986500B12e7c4e5bB7', true)
     .catch((error) => {
         console.error(error);
     });
     console.log('Registering event', tx4);
-    
-    
-    
-
 }
 
 main().catch((error) => {

@@ -23,7 +23,7 @@ contract POPEvent is IPOPEvent, LSP7DigitalAsset, ReentrancyGuard {
 
     /// @dev Modifier to ensure caller is authorized operator
     modifier onlyAuthorizedAgent() {
-        if (!authorizedAgents[msg.sender] || msg.sender != owner()) {
+        if (!authorizedAgents[msg.sender] && msg.sender != owner()) {
             revert Unauthorized();
         }
         _;
